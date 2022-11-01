@@ -10,6 +10,33 @@
 
 
 
+### 선언 방식 변성 (Declaration-site variance)
+
+```kotlin
+interface Factory<out T> {
+    fun pop(): T
+
+    fun push(t: T) // compile error
+}
+```
+
+- `Factory` 라는 클래스는 제네릭 파라미터 T 에 대해 공변(covariant) 임을 의미한다.
+- `Factory` 클래스는 T 의 producer 만 가능하다고 생각할 수 있다. consumer 는 될 수 없다. 따라서 메소드 파라미터로 타입이 T 인 변수를 받아오지 못한다. (컴파일 에러가 난다.)
+- 따라서 아래 코드처럼 안정성을 확보하면서도, 컴파일에러를 일으키지 않고 잘 사용할 수 있다.
+  - 자바에서는 선언형 방식으로 variance 를 기술할 수 없어, 아래와 같은 코드는 타입이 안정적이지 못하다고 판단하여(그렇지 않음에도 불구하고) 컴파일 에러가 난다.
+
+```kotlin
+fun toAnys(strs: Factory<String>) {
+  val anys: Factory<Any> = strs
+}
+```
+
+
+
+
+
+
+
 
 
 ### Star-projections
