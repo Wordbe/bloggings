@@ -59,3 +59,73 @@ fun outer() {
 }
 ```
 
+<br />
+
+<br />
+
+## 람다 (Lambdas)
+
+### 함수 타입 (Function Types)
+
+- `A -> B` , `(A, B) -> C` 등
+- 선택사항으로 파라미터(B)가 담긴 수신자 타입(A)을 명시할 수 있다. `A.(B) -> C`
+- 함수 타입에 가명을 만들 수도 있다.
+  - `typealias onClick = (Button, ClickEvent) -> Unit`
+
+<br />
+
+### 람다 표현식과 익명 함수 (Lambda expressions and anonymous functions)
+
+- 람다 표현식과 익명 함수는 함수 리터럴이다.
+- 함수 리터럴이란, 미리 선언되지 않고 표현문으로써 바로 전달이 가능한 함수를 말한다.
+
+```kotlin
+max(strings, { a, b -> a.length < b.length })
+```
+
+<br />
+
+### Trailing lambdas
+
+함수 파라미터 마지막에 함수가 온다면, 소괄호 바깥쪽에 람다 표현문을 아규먼트로 전달할 수 있다. 이 부분은 상당히 실용적이다.
+
+즉, 위 max 함수를 아래와 같이 써도 된다.
+
+```kotlin
+max(strings) { a, b -> a.length < b.length }
+```
+
+<br />
+
+### it
+
+파라미터가 한 개만 있는 람다식은 `->` 를 생략할 수 있고, 그 파라미터를 `{ }` 안에서 `it` 으로 사용할 수 있다.
+
+```kotlin
+numbers.filter { it > 0 }
+```
+
+<br />
+
+<br />
+
+### 익명 함수
+
+익명 함수는 람다와 같지만, 리턴 타입을 명시해줄 수 있는 장점이 있다. (람다식은 리턴 타입을 자동 추론한다.) 리턴 타입을 꼭 명시하고 싶다면 익명 함수를 사용하자.
+
+```kotlin
+fun(x: Int, y: Int): Int {
+  return x + y
+} 
+```
+
+익명 함수도 표현문 바디로 되어있다면 아래처럼 리턴타입을 자동으로 추론해준다.
+
+```kotlin
+fun(x: Int, y: Int) = x + y
+```
+
+
+
+
+
