@@ -127,5 +127,123 @@ fun(x: Int, y: Int) = x + y
 
 
 
+<br />
 
+<br />
+
+<br />
+
+# 널 안정성 (Null Safety)
+
+코틀린은 널을 가질 수 있는 타입과 그렇지 않은 타입을 구분한다. 그리고 널 가능한 타입은 타입 뒤에 `?` 를 붙여서 나타낼 수 있다.
+
+- null 을 관리하는 이유는, 널 참조 에러를 만든 것이 수십억 달러 비용 낭비를 야기했기 때문이다.
+
+널 안정성을 컴파일 레벨에서 관리하게 만들었기 때문에 `NullPointerException` 예외 발생을 제한적으로 일어나게 되고, 개발자들이 예측 가능한 프로그래밍을 할 수 있는데 도움을 준다.
+
+```kotlin
+var a: String = "a"
+a = null // 컴파일 에러
+
+var b: String? = "b" // nullable type
+b = null // 가능
+```
+
+<br />
+
+## 안전 호출 (Safe Call)
+
+nullable type 은 `?.` 를 붙여서 해당 타입이 가진 메소드를 안전하게 호출 할 수 있다. 만약, 메소드를 부르는 인스턴스가 `null` 인 경우 에러가 발생하는 대신에 `null` 을 리턴한다.
+
+```kotlin
+var a: String? = "a"
+print(a?.length) // a
+
+a = null
+print(a?.length) // null
+```
+
+```kotlin
+if (a == null) {
+  return null
+} else {
+  return a.length
+}
+```
+
+이런 로직이 내부에 있을 것이다.
+
+<br />
+
+safe call 은 연쇄적으로 호출할 때 유용하다.
+
+```kotlin
+user?.team?.head?.email
+```
+
+유저의 팀이 있다면, 팀을 호출하고, 그 팀의 사장이 있다면 사장을 호출하고, 그 사장의 이메일이 있다면 이메일을 호출 할 것이다.
+
+만약, 하나라도 해당 프로퍼티가 없다면, `null` 을 반환한다. 
+
+safe call 이 없고, 이런 기능을 호출하는 로직이 있다고 생각해보면, 런타임에 쉽게 `NPE` 가 발생할 수 있는 쿼리이다. 이렇게 널 가능한 타입을 통해 개발시점에 미리 해당 부분의 null 처리를 미리할 수 있도록 도와준다.
+
+세이프 콜이 없다면, `if` 로 도배된 분기로직을 작성해야 할 것이다.
+
+<br />
+
+## 엘비스 연산 (Elvis operator)
+
+널 가능한 타입에서 null 일 때 특별한 조치를 취하고 싶으면, `?:` 연산으로 간단하게 처리할 수 있다.
+
+```kotlin
+val length: Int = if (a != null) a.length else -1
+```
+
+위 로직을 아래와 같이 간단하게 바꿀 수 있다.
+
+```kotlin
+val length = a?.length ?: -1
+```
+
+`?:` 오른쪽 부분은 왼쪽 부분이 널이 아닐때만 실행된다.
+
+코틀린에서는 `throw`, `return` 이 표현문이기 때문에, 아래와 같이도 사용할 수 있다.
+
+```kotlin
+fun add(user: User): String? {
+  val team = user.getTeam() ?: return null
+  val name = user.getName() ?: throw IllegalArgumentException()
+  ...
+}
+```
+
+<br />
+
+<br />
+
+## !! 연산
+
+널 가능 타입에서 NPE 를 발생시키고 싶다면, `!!` 연산을 사용할 수 있다. 
+
+확실히 널이 아니라고 생각되는 곳에 사용되기도 한다.
+
+```kotlin
+val b = a!!.length
+```
+
+a 가 널이면 NPE 가 발생한다.
+
+<br />
+
+<br />
+
+## Safe casts
+
+`ClassCastException` 을 방지하고자 할 때 사용할 수 있는 문법이 있다.
+
+클래스 캐스트가 실패하면 `null` 을 리턴한다.
+
+```kotlin
+val b: String? = a as? String
+```
 
