@@ -148,3 +148,15 @@ suspend fun preparePost(): Token {
 - 플랫폼과는 독립적이다. JVM 이든, JavaScript 또는 다른 플랫폼이든 코드는 같다. 
 - 코루틴 개념은 새로운 개념은 아니고 이전에 `Go` 에서도 `goroutine` 으로 사용되었다. 코루틴의 장점은 `suspend` 를 제외하면 대부분 기능은 라이브러리에 위임돼있다. 따라서 적용하기 쉽다.
 
+
+
+<br />
+
+<br />
+
+<br />
+
+<br />
+
+<br />
+
