@@ -155,12 +155,53 @@ suspend fun preparePost(): Token {
 ## 구조분해 선언 (Destructing Declarations)
 
 ```kotlin
-val (name, age) = person
+val (id, title) = book
 ```
 
+이 문버비 가능한 이유는 위 코드가 아래 코드로 컴파일시 변환되기 때문이다.
 
+```kotlin
+val id = book.component1()
+val title = book.component2()
+```
 
+`componentN()` 메소드는 코틀린 코드 컨벤션이고, 다른 메소드명으로 만들어도 된다. 해당 타입의 프로퍼티를 가져올 수 있으면 되고, 이 떄 `operator` 키워드가 붙여있으면서 정의되어야 한다.
 
+`data class` 를 사용하면 `componentN()` 을 자동으로 만들어주는데, 덕분에 구조분해 선언을 자연스럽게 바로 사용할 수 있다.
+
+```kotlin
+data class Book(val id: Long, val title: String)
+```
+
+<br />
+
+map 도 아래와 같이 쉽게 key, value 를 꺼내올 수 있다.
+
+```kotlin
+for ((key, value) in map) {
+  //
+}
+```
+
+표준 라이브러리에 `iterator()` 과 `componentN()` 이 이미 잘 구현되어있기 때문이다.
+
+```kotlin
+operator fun <K, V> Map<K, V>.iterator(): Iterator<Map.Entry<K, V>> = entrySet().iterator()
+operator fun <K, V> Map.Entry<K, V>.component1() = getKey()
+operator fun <K, V> Map.Entry<K, V>.component2() = getValue()
+```
+
+<br />
+
+<br />
+
+가져오지 않을 값은 언더스코어(_) 로 생략할 수 있다.
+
+```kotlin
+val (_, title) = book
+```
+
+- _ 는 `componentN()` 호출이 스킵된다.
 
 
 
