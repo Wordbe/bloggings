@@ -152,7 +152,7 @@ suspend fun preparePost(): Token {
 
 <br />
 
-## 구조분해 선언 (Destructing Declarations)
+# 구조분해 선언 (Destructing Declarations)
 
 ```kotlin
 val (id, title) = book
