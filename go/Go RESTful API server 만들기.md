@@ -49,3 +49,38 @@ func main() {
 }
 ```
 
+<br />
+
+## Short variable declarations
+
+```go
+func main() {
+  var i, j int = 1, 2
+  k := 3
+  a, b, c := true, false, ""
+}
+```
+
+<br />
+
+## Basic types
+
+```go
+bool
+
+string
+
+int  int8  int16  int32  int64
+uint uint8 uint16 uint32 uint64 uintptr
+
+byte // alias for uint8
+
+rune // alias for int32
+     // represents a Unicode code point
+
+float32 float64
+
+complex64 complex128
+```
+
+- int, uint, uintptr 타입은 32bit 시스템에서는 32bit 로 사용되고, 64bit 시스템에서는 64bit 로 사용된다. 
