@@ -139,3 +139,33 @@ func main() {
 - `_, v`, `i, _` 처럼 필요한 변수만 사용할 수 도 있다.
 
 <br />
+
+## Exercise: Slices
+
+`Pic` 함수를 구현해보자. `Pic`함수는 세로 길이가 dy, 가로 길이가 dx 인 이미지를 만든다.
+
+그래서 반환 값으로는 `[dy][dx]uint8` 형태의 2차원 Array 를 반환하면 된다.
+
+```go
+package main
+
+import "golang.org/x/tour/pic"
+
+func Pic(dx, dy int) [][]uint8 {
+	pixel := make([][]uint8, dy)
+	row := make([]uint8, dx)
+	
+	for i := range pixel {
+		for j := range row {
+			row[j] = uint8((i + j) / 2)
+		}
+		pixel[i] = row
+	}
+	return pixel
+}
+
+func main() {
+	pic.Show(Pic)
+}
+```
+
