@@ -254,3 +254,99 @@ func main() {
 
 <br />
 
+<br />
+
+# Functions
+
+## Function Values
+
+- Go 에서 함수는 값이다. 따라서 함수의 인자 또는 함수의 반환 값으로 함수가 사용될 수 있다.
+- 문법은 간단히 아래와 같다.
+
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+func compute(fn func(float64, float64) float64) float64 {
+	return fn(3, 4) // function can be used as a return value
+}
+
+func main() {
+	hypot := func(x, y float64) float64 { // assignment a function value to a variable
+		return math.Sqrt(x*x + y*y)
+	}
+	fmt.Println(hypot(5, 12))
+	fmt.Println(compute(hypot))    // function can be used as an argument value
+	fmt.Println(compute(math.Pow)) // function can be used as an argument value
+}
+
+// 13
+// 5
+// 81
+```
+
+<br />
+
+## Function Closures
+
+- go 함수는 클로저가 될 수 있다.
+- 클로저란 함수 바깥의 변수를 참조하는 함수를 말한다.
+- 함수를 리턴하는 함수에서 리턴된 함수가 내부의 변수를 참조한다면 클로저가 될 수 있다.
+
+```go
+func adder() func(int) int {
+  sum := 0
+  return func(x int) int {
+    sum += x
+    return sum
+  }
+}
+
+func main() {
+  a := adder() // 클로저를 반환. adder 함수가 호출됐을 때 메모리에 계속 남아있어 sum 변수도 유지된다.
+  for i := 1; i <= 10; i++ {
+    fmt.Println(a(i)) // 클로저를 호출. 각각의 클로저가 호출될 때 갱신된 sum 변수에 bound 된다.
+  }
+}
+
+1
+3
+6
+10
+15
+21
+28
+36
+45
+55
+```
+
+<br />
+
+## Exercise: Fibonacci closure
+
+```go
+func fibonacci() func() int {
+	a, b := 0, 1
+	return func() int {
+		result := a
+		a, b = b, a + b
+		return result
+	}
+}
+
+func main() {
+	f := fibonacci()
+	for i := 0; i < 10; i++ {
+		fmt.Println(f())
+	}
+}
+```
+
+<br />
+
+<br />
