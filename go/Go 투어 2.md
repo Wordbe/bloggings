@@ -169,3 +169,88 @@ func main() {
 }
 ```
 
+<br />
+
+# Maps
+
+- 키, 값을 저장
+
+```go
+type Vertex struct {
+  Lat, Long float64
+}
+
+func main() {
+  var m map[string]Vertex = make(map[string]Vertex)
+  m["M Tower"] = Vertex{
+    10.67432, -30.14725,
+  }
+  fmt.Println(m["M Tower"])
+}
+```
+
+<br />
+
+## Map literals
+
+아래와 같이도 맵을 선언할 수 있다.
+
+```go
+var m = map[string]Vertex{
+	"Bell Labs": Vertex{
+		40.68433, -74.39967,
+	},
+	"Google": Vertex{
+		37.42202, -122.08408,
+	},
+}
+```
+
+<br />
+
+## Map 변형하기 (Mutate)
+
+- 삭제는 `delete(m, "Google")` 과 같이 가능
+- 추가로 두 변수 할당으로 키가 존재하는지 테스트할 수 있는 점이 흥미롭다.
+
+```go
+func main() {
+	elem, ok := m["Google"]
+	fmt.Println("The value:", elem, "Present?", ok)
+	
+	elem, ok = m["Apple"]
+	fmt.Println("The value:", elem, "Present?", ok)
+}
+
+// The value: {37.42202 -122.08408} Present? true
+// The value: {0 0} Present? false
+```
+
+<br />
+
+## Maps 연습문제
+
+```go
+package main
+
+import (
+	"golang.org/x/tour/wc"
+	"strings"
+)
+
+func WordCount(s string) map[string]int {
+	m := make(map[string]int)
+	fields := strings.Fields(s)
+	for _, field := range fields {
+		m[field]++
+	}
+	return m
+}
+
+func main() {
+	wc.Test(WordCount)
+}
+```
+
+<br />
+
