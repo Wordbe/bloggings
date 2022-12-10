@@ -233,3 +233,54 @@ googleDNS: 8.8.8.8
 
 <br />
 
+## Errors
+
+go 에서는 error 라는 내장된 인터페이스가 있다. `Stringer` 처럼 fmt 가 출력시 참고하는 인터페이스이다.
+
+```go
+type error interface {
+    Error() string
+}
+```
+
+
+
+error 를 반환하는 함수가 있는데, error 가 `nil` 인지 검사후 에러처리를 해주면 된다.
+
+```go
+i, err := strconv.Atoi("42")
+if err != nil {
+    fmt.Printf("couldn't convert number: %v\n", err)
+    return
+}
+fmt.Println("Converted integer:", i)
+```
+
+<br />
+
+예제)
+
+```go
+type MyError struct {
+	When time.Time
+	What string
+}
+
+func (e *MyError) Error() string {
+	return fmt.Sprintf("at %v, %s", e.When, e.What)
+}
+
+func run() error {
+	return &MyError{
+		time.Now(),
+		"didn't work",
+	}
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Println(err)
+	}
+}
+```
+
