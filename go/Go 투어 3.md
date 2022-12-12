@@ -284,3 +284,38 @@ func main() {
 }
 ```
 
+<br />
+
+<br />
+
+## Readers
+
+- `io` 패키지는 `io.Reader` 인터페이스를 제공한다. 
+
+```go
+func (T) Read(b []byte) (n int, err error)
+```
+
+- byte 배열(문자열) 을 받아서 몇 개의 문자를 받아왔는지(populate)와, 에러가 있다면 err 를 반환한다.
+
+<br />
+
+## Images
+
+```go
+package image
+
+type Image interface {
+    ColorModel() color.Model
+    Bounds() Rectangle
+    At(x, y int) color.Color
+}
+```
+
+<br />
+
+<br />
+
+<br />
+
+<br />
