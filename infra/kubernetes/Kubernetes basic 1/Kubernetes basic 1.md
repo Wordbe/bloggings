@@ -373,9 +373,252 @@ Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-646sq | v
 
 # Scale your app
 
-# 앱 변경
+스케일링은 디플로이먼트에서 relicas 수를 조절하면 된다.
 
+![](https://d33wubrfki0l68.cloudfront.net/30f75140a581110443397192d70a4cdb37df7bfc/b5f56/docs/tutorials/kubernetes-basics/public/images/module_05_scaling2.svg)
 
+쿠버네티스는 autoscaling 도 지원한다.
+
+서비스들은 노출된 deployment 의 모든 파드에 네트워크 트래픽을 배포하는 통합된 로드밸런서를 가진다. 서비스들은 엔드포인트를 사용해서 파드가 실행중인지 계속 모니터링하여 가용한 파드에 트래픽이 잘 보내지는지 확인한다.
+
+## Scaling 실습
+
+```shell
+$ kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   1/1     1            1           42s
+
+# Deployment 에 의해 생성된 ReplicaSet 확인
+$ kubectl get rs
+NAME                            DESIRED   CURRENT   READY   AGE
+kubernetes-bootcamp-fb5c67579   1         1         1       37s
+```
+
+- ReplicaSet 이름은 `[DEPLOYMENT-NAME]-[RANDOM-STRING]` 형식으로 항상 지어진다.
+
+**Scale-Up**
+
+```shell
+$ kubectl scale deployments/kubernetes-bootcamp --replicas=4
+deployment.apps/kubernetes-bootcamp scaled
+
+$ kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   4/4     4            4           69s
+
+$ kubectl get pods -o wide
+NAME                                  READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-fb5c67579-275mh   1/1     Running   0          72s   172.18.0.5   minikube   <none>           <none>
+kubernetes-bootcamp-fb5c67579-bmnpn   1/1     Running   0          28s   172.18.0.7   minikube   <none>           <none>
+kubernetes-bootcamp-fb5c67579-mp9ql   1/1     Running   0          28s   172.18.0.8   minikube   <none>           <none>
+kubernetes-bootcamp-fb5c67579-rb8v9   1/1     Running   0          28s   172.18.0.9   minikube   <none>           <none>
+
+```
+
+- 변경사항은 디플로이먼트 로그에 기록되는데, 아래와 같이 확인할 수 있다.
+
+```shell
+$ kubectl describe deployments/kubernetes-bootcamp
+...
+OldReplicaSets:  <none>
+NewReplicaSet:   kubernetes-bootcamp-fb5c67579 (4/4 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  3m     deployment-controller  Scaled up replica set kubernetes-bootcamp-fb5c67579 to 1
+  Normal  ScalingReplicaSet  2m15s  deployment-controller  Scaled up replica set kubernetes-bootcamp-fb5c67579 to 4
+
+```
+
+<br />
+
+**Load Balancing**
+
+```shell
+$ kubectl describe services/kubernetes-bootcamp
+...
+IP:                       10.103.222.106
+IPs:                      10.103.222.106
+Port:                     <unset>  8080/TCP
+TargetPort:               8080/TCP
+NodePort:                 <unset>  30096/TCP
+Endpoints:                172.18.0.5:8080,172.18.0.7:8080,172.18.0.8:8080 + 1 more...
+...
+
+$ export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(indx .spec.ports 0).nodePort}}')
+$ echo NODE_PORT=$NODE_PORT
+NODE_PORT=30096
+
+# 가용한 서버로 로드 밸런싱이 잘 되고 있음을 확인
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-275mh | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-275mh | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-rb8v9 | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-bmnpn | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-bmnpn | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-rb8v9 | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-mp9ql | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-275mh | v=1
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-fb5c67579-rb8v9 | v=1
+```
+
+**Scale-Down**
+
+```shell
+$ kubectl scale deployments/kubernetes-bootcamp --replicas=2
+deployment.apps/kubernetes-bootcamp scaled
+
+$ kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   2/2     2            2           8m38s
+
+# 4대 중 2대가 종료될 때까지 시간이 조금 걸린다.
+$ kubectl get pods -o wide
+NAME                                  READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+kubernetes-bootcamp-fb5c67579-275mh   1/1     Running   0          8m30s   172.18.0.5   minikube   <none>           <none>
+kubernetes-bootcamp-fb5c67579-bmnpn   1/1     Running   0          7m46s   172.18.0.7   minikube   <none>           <none>
+```
+
+<br />
+
+# 앱 변경 (Rolling Updates)
+
+Rolling updates 는 디플로이먼트 변경을 zero downtime 으로 가능하게 할 수 있다. 새로운 파드를 만들어 기존 파드를 업데이트하면 된다.
+
+쿠버네티스에서는 업데이트는 버전이 기록되고, 디플로이먼트 업데이트는 안정한 이전 상태로 복구할 수 있다.
+
+![](https://d33wubrfki0l68.cloudfront.net/678bcc3281bfcc588e87c73ffdc73c7a8380aca9/703a2/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg)
+
+![](https://d33wubrfki0l68.cloudfront.net/6d8bc1ebb4dc67051242bc828d3ae849dbeedb93/fbfa8/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates4.svg)
+
+## Rolling Updates 실습
+
+```shell
+$ kubectl describe pods
+...
+Containers:
+  kubernetes-bootcamp:
+    Container ID:   docker://0c55645c403de6dae7dade968fd72c5c94486a2686192d4271b7dd281f2a9251
+    Image:          gcr.io/google-samples/kubernetes-bootcamp:v1
+    Image ID:       docker-pullable://jocatalin/kubernetes-bootcamp@sha256:0d6b8ee63bb57c5f5b6156f446b3bc3b3c143d233037f3a2f00e279c8fcc64af
+...
+
+# 컨테이너 이미지 변경
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+deployment.apps/kubernetes-bootcamp image updated
+
+$ kubectl get pods
+NAME                                   READY   STATUS              RESTARTS   AGE
+kubernetes-bootcamp-7d44784b7c-299j8   1/1     Running             0          4s
+kubernetes-bootcamp-7d44784b7c-892f5   0/1     ContainerCreating   0          1s
+kubernetes-bootcamp-7d44784b7c-jkgrm   0/1     ContainerCreating   0          1s
+kubernetes-bootcamp-7d44784b7c-qzlm9   1/1     Running             0          4s
+kubernetes-bootcamp-fb5c67579-5cfjp    1/1     Running             0          2m24s
+kubernetes-bootcamp-fb5c67579-6n2mr    1/1     Terminating         0          2m24s
+kubernetes-bootcamp-fb5c67579-g72hq    1/1     Terminating         0          2m24s
+kubernetes-bootcamp-fb5c67579-n7frn    1/1     Terminating         0          2m24s
+
+# After waiting
+$ kubectl get podsNAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-7d44784b7c-299j8   1/1     Running   0          3m24s
+kubernetes-bootcamp-7d44784b7c-892f5   1/1     Running   0          3m21s
+kubernetes-bootcamp-7d44784b7c-jkgrm   1/1     Running   0          3m21s
+kubernetes-bootcamp-7d44784b7c-qzlm9   1/1     Running   0          3m24s
+```
+
+**업데이트 확인**
+
+```shell
+$ kubectl describe services/kubernetes-bootcamp
+...
+NodePort:                 <unset>  32456/TCP
+Endpoints:                172.18.0.10:8080,172.18.0.11:8080,172.18.0.12:8080 + 1 more...
+...
+
+$ export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+$ echo NODE_PORT=$NODE_PORT
+NODE_PORT=32456
+
+# 모든 파드가 다 v2 로 변경된 것을 확인
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7d44784b7c-299j8 | v=2
+$ curl $(minikube ip):$NODE_PORT
+Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-7d44784b7c-892f5 | v=2
+
+# 롤아웃 확인
+$ kubectl rollout status deployments/kubernetes-bootcamp
+deployment "kubernetes-bootcamp" successfully rolled out
+
+# 파드 확인
+$ kubectl describe pods
+...
+    Image:          jocatalin/kubernetes-bootcamp:v2
+    Image ID:       docker-pullable://jocatalin/kubernetes-bootcamp@sha256:fb1a3ced00
+...
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  4m15s  default-scheduler  Successfully assigned default/kubernetes-bootcamp-7d44784b7c-qzlm9 to minikube
+  Normal  Pulled     4m14s  kubelet            Container image "jocatalin/kubernetes-bootcamp:v2" already present on machine
+  Normal  Created    4m14s  kubelet            Created container kubernetes-bootcamp
+  Normal  Started    4m13s  kubelet            Started container kubernetes-bootcamp
+```
+
+**Rollback an update**
+
+```shell
+$ kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10
+deployment.apps/kubernetes-bootcamp image updated
+$ kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+kubernetes-bootcamp   3/4     2            3           10m
+$ kubectl get pods
+NAME                                   READY   STATUS             RESTARTS   AGE
+kubernetes-bootcamp-59b7598c77-44nr9   0/1     ImagePullBackOff   0          14s
+kubernetes-bootcamp-59b7598c77-jk9w8   0/1     ImagePullBackOff   0          14s
+kubernetes-bootcamp-7d44784b7c-299j8   1/1     Running            0          8m12s
+kubernetes-bootcamp-7d44784b7c-892f5   1/1     Running            0          8m9s
+kubernetes-bootcamp-7d44784b7c-jkgrm   1/1     Terminating        0          8m9s
+kubernetes-bootcamp-7d44784b7c-qzlm9   1/1     Running            0          8m12s
+$ kubectl describe pods
+# Events 내역에 v10 내용은 없음
+```
+
+- 업데이트 하다가 에러가 발생했다고 가정해보자.
+- `ImagePullBackOff` 상태는 무엇인가가 이미지 받아오는 것을 막고있어 에러가 났다는 것이다.
+
+```shell
+$ kubectl rollout undo deployments/kubernetes-bootcamp
+deployment.apps/kubernetes-bootcamp rolled back
+$ kubectl get pods
+NAME                                   READY   STATUS        RESTARTS   AGE
+kubernetes-bootcamp-59b7598c77-44nr9   0/1     Terminating   0          5m6s
+kubernetes-bootcamp-59b7598c77-jk9w8   0/1     Terminating   0          5m6s
+kubernetes-bootcamp-7d44784b7c-299j8   1/1     Running       0          13m
+kubernetes-bootcamp-7d44784b7c-892f5   1/1     Running       0          13m
+kubernetes-bootcamp-7d44784b7c-k75b4   1/1     Running       0          6s
+kubernetes-bootcamp-7d44784b7c-qzlm9   1/1     Running       0          13m
+
+# 잠시 후
+$ kubectl get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+kubernetes-bootcamp-7d44784b7c-299j8   1/1     Running   0          14m
+kubernetes-bootcamp-7d44784b7c-892f5   1/1     Running   0          14m
+kubernetes-bootcamp-7d44784b7c-k75b4   1/1     Running   0          79s
+kubernetes-bootcamp-7d44784b7c-qzlm9   1/1     Running   0          14m
+$ kubectl describe pods
+# 원래 버전인 v2 버전으로 돌아왔다.
+```
+
+원래대로 정상적으로 돌아온 것을 확인할 수 있다. 
 
 
 
