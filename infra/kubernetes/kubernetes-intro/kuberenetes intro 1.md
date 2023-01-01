@@ -14,4 +14,20 @@
 # 3 Kubernetes
 
 - 배의 조타수를 의미 (그리스어)
-- 
+
+
+
+<br />
+
+# 5 Pod
+
+## 파드 구성 패턴
+
+- _Design pattern for container-based distributed system_ 구글에서 공개한 컨테이너 운영 경험 자료
+
+**1 사이드카 패턴**
+
+**2 엠배서더 패턴**
+
+**3 어댑터 패턴**
+
